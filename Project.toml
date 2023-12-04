@@ -1,3 +1,8 @@
+name = "KitAD"
+uuid = "f5221ccc-fa42-4e2a-b4fe-d2bb8caf72c3"
+authors = ["Tianbai Xiao <tianbaixiao@gmail.com>"]
+version = "0.1.0"
+
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 KitBase = "86eed249-3a28-466f-8d3a-596821e1af9a"
