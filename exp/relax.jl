@@ -24,7 +24,7 @@ M0 = KB.maxwellian(vs.u, prim0)
 Kn0 = 1.0
 μ0 = KB.ref_vhs_vis(Kn0, 1.0, 0.5)
 τ0 = μ0 * 2.0 * prim0[end]^(0.5) / prim0[1]
-p0 = [τ0, ]
+p0 = [τ0]
 
 function bgk!(df, f, p, t)
     w = KB.moments_conserve(f, vs.u, vs.weights)

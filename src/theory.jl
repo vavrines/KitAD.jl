@@ -1,7 +1,7 @@
 function flux_kfvs(fL, fR, u)
     δ = KB.heaviside(u)
     f = u * (fL * δ + fR * (1.0 - δ))
-    return u * f 
+    return u * f
 end
 
 function moments_conserve(f, u, ω)
@@ -13,9 +13,5 @@ function moments_conserve(f, u, ω)
 end
 
 function conserve_prim(W, γ)
-    return [
-        W[1],
-        W[2] / W[1],
-        0.5 * W[1] / (γ - 1.0) / (W[3] - 0.5 * W[2]^2 / W[1]),
-    ]
+    return [W[1], W[2] / W[1], 0.5 * W[1] / (γ - 1.0) / (W[3] - 0.5 * W[2]^2 / W[1])]
 end

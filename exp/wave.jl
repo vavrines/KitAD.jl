@@ -22,7 +22,7 @@ weights = vs.weights
 Kn0 = 1e-2
 μ0 = KB.ref_vhs_vis(Kn0, 1.0, 0.5)
 τ0 = μ0 * 2.0 * prim0[end]^(0.5) / prim0[1]
-p0 = [μ0, ]
+p0 = [μ0]
 
 prim0 = zeros(3, axes(ps.x, 1))
 f0 = zeros(vs.nu, axes(ps.x, 1))
@@ -85,6 +85,6 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, [1.0, ], Adam(); cb = cb, iters = 1000, ad = AutoZygote())
+res = sci_train(loss, [1.0], Adam(); cb = cb, iters = 1000, ad = AutoZygote())
 
 @show res.u
