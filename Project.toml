@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 KitBase = "86eed249-3a28-466f-8d3a-596821e1af9a"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Optimisers = "3bd65402-5787-11e9-1adc-39752487f4e2"
