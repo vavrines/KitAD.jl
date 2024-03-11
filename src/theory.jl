@@ -8,7 +8,7 @@ function moments_conserve(f, u, ω)
     return [
         KB.discrete_moments(f, u, ω, 0),
         KB.discrete_moments(f, u, ω, 1),
-        KB.discrete_moments(f, u, ω, 2),
+        0.5 * KB.discrete_moments(f, u, ω, 2),
     ]
 end
 
