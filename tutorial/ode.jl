@@ -67,13 +67,7 @@ using Zygote, BenchmarkTools
 @btime Zygote.pullback(x -> loss1(x; vjp = false), p0)[2](1)[1]
 
 function loss2(p; vjp)
-    sol = solve(
-        prob,
-        Tsit5(),
-        p = p,
-        saveat = tsteps,
-        sensealg = ForwardDiffSensitivity(),
-    )
+    sol = solve(prob, Tsit5(), p = p, saveat = tsteps, sensealg = ForwardDiffSensitivity())
     loss = sum(abs2, sol .- 1)
 
     return loss
@@ -84,13 +78,7 @@ end
 
 # discretize-then-optimize approach
 function loss3(p)
-    sol = solve(
-        prob,
-        Tsit5(),
-        p = p,
-        saveat = tsteps,
-        sensealg = ReverseDiffAdjoint(),
-    )
+    sol = solve(prob, Tsit5(), p = p, saveat = tsteps, sensealg = ReverseDiffAdjoint())
     loss = sum(abs2, sol .- 1)
 
     return loss
