@@ -80,4 +80,21 @@ function loss2(p; vjp)
 end
 
 # more efficient since the dimension is low
-@btime Zygote.pullback(x -> loss2(x; vjp = EnzymeVJP()), p0)[2](1)[1]
+@btime Zygote.pullback(x -> loss2(x), p0)[2](1)[1]
+
+# discretize-then-optimize approach
+function loss3(p)
+    sol = solve(
+        prob,
+        Tsit5(),
+        p = p,
+        saveat = tsteps,
+        sensealg = ReverseDiffAdjoint(),
+    )
+    loss = sum(abs2, sol .- 1)
+
+    return loss
+end
+
+Zygote.pullback(x -> loss3(x), p0)[2](1)[1]
+sci_train(loss3, p0, Adam(); cb = cb, iters = 1000, ad = AutoZygote())
