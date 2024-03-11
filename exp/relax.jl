@@ -3,8 +3,7 @@ Quantifying the Knuden number of the reference state in the homegenous relaxatio
 
 """
 
-using OrdinaryDiffEq, SciMLSensitivity
-using Solaris
+using OrdinaryDiffEq, SciMLSensitivity, Solaris
 using Optimization: AutoZygote
 using Optimisers: Adam
 using Optim: LBFGS
@@ -46,7 +45,7 @@ function loss(p)
 end
 
 cb = function (p, l)
-    println("loss: $(loss(p))")
+    println("loss: $(l)")
     return false
 end
 
