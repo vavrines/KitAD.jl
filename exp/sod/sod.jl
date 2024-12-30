@@ -4,9 +4,6 @@ Optimization of numerical flux function for Euler equations
 """
 
 using OrdinaryDiffEq, SciMLSensitivity, Solaris
-using Optimization: AutoZygote
-using Optimisers: Adam
-using Optim: LBFGS
 using Flux: sigmoid
 import KitAD as KA
 import KitBase as KB
@@ -45,7 +42,7 @@ end
 tspan = (0.0, 0.2)
 dt = 0.001
 tran = tspan[1]:dt*10:tspan[end]
-ps = KB.PSpace1D(0, 1, 150)
+ps = KB.PSpace1D(0, 1, 200)
 dx = ps.dx[1]
 
 begin
@@ -84,13 +81,15 @@ function rhs!(dw, w, p, t)
     nx = size(w, 2)
 
     flux = zeros(3, nx + 1)
-    for j = 2:nx
+    @inbounds for j = 2:nx
         fw = @view flux[:, j]
-        flux_opt!(fw, w[:, j-1], w[:, j], p[1])
-        #flux_opt!(fw, w[:, j-1], w[:, j], p[j])
+        wL = @view w[:, j-1]
+        wR = @view w[:, j]
+        #flux_opt!(fw, wL, wR, p[1])
+        flux_opt!(fw, wL, wR, p[j])
     end
 
-    for j = 2:nx-1
+    @inbounds for j = 2:nx-1
         for i in axes(w, 1)
             dw[i, j] = (flux[i, j] - flux[i, j+1]) / dx
         end
@@ -118,11 +117,10 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, p0, Adam(0.05); cb = cb, iters = 500, ad = AutoZygote())
-#res = sci_train(loss, res.u, LBFGS(); cb = cb, iters = 100, ad = AutoZygote())
-res = sci_train(loss, res.u, Adam(0.01); cb = cb, iters = 100, ad = AutoZygote())
+res = sci_train(loss, p0, Adam(0.05); cb = cb, iters = 100, ad = AutoZygote())
+res = sci_train(loss, res.u, AdamW(0.01); cb = cb, iters = 100, ad = AutoZygote())
 #
-# until 0.36x
+# ~ 0.30x
 #
 
 prob1 = ODEProblem(rhs!, w0, tspan, res.u)
@@ -149,7 +147,9 @@ begin
     plot!(ps.x[1:ps.nx], sole_prim[idx, :], label = "exact")
 end
 
+plot(ps.x[2:ps.nx], res.u[2:ps.nx])
+
 using KitBase.JLD2
 cd(@__DIR__)
 u = res.u
-@save "sodpara.jld2" u # -1.9244146828496453
+@save "sodpara.jld2" u # ~ -1.9244146828496453
