@@ -9,19 +9,19 @@ using Optimisers: Adam
 using Optim: LBFGS
 using BenchmarkTools, Plots
 
-set = config_ntuple(
-    u0 = -5,
-    u1 = 5,
-    nu = 80,
-    v0 = -5,
-    v1 = 5,
-    nv = 28,
-    w0 = -5,
-    w1 = 5,
-    nw = 28,
-    t1 = 8,
-    nt = 81,
-    Kn = 1,
+set = config_ntuple(;
+    u0=-5,
+    u1=5,
+    nu=80,
+    v0=-5,
+    v1=5,
+    nv=28,
+    w0=-5,
+    w1=5,
+    nw=28,
+    t1=8,
+    nt=81,
+    Kn=1,
 )
 
 tspan = (0, set.t1)
@@ -32,8 +32,8 @@ vs = VSpace1D(set.u0, set.u1, set.nu)
 vs2 = VSpace2D(set.v0, set.v1, set.nv, set.w0, set.w1, set.nw)
 vs3 = VSpace3D(set.u0, set.u1, set.nu, set.v0, set.v1, set.nv, set.w0, set.w1, set.nw)
 
-f0 = 0.5 * (1 / π)^1.5 .*
-    (exp.(-(vs3.u .- 1) .^ 2) .+ 0.7 .* exp.(-(vs3.u .+ 1) .^ 2)) .*
+f0 =
+    0.5 * (1 / π)^1.5 .* (exp.(-(vs3.u .- 1) .^ 2) .+ 0.7 .* exp.(-(vs3.u .+ 1) .^ 2)) .*
     exp.(-vs3.v .^ 2) .* exp.(-vs3.w .^ 2)
 
 mu_ref = ref_vhs_vis(set.Kn, set.α, set.ω)
@@ -58,7 +58,7 @@ phi, psi, chi = kernel_mode(
     set.α,
 )
 prob = ODEProblem(boltzmann_ode!, f0, tspan, [kn_bzm, set.nm, phi, psi, chi])
-data_boltz = solve(prob, Tsit5(), saveat = tsteps) |> Array
+data_boltz = solve(prob, Tsit5(); saveat=tsteps) |> Array
 
 #@benchmark solve(prob, Tsit5(), saveat = tsteps) |> Array
 """
@@ -75,7 +75,7 @@ BenchmarkTools.Trial: 3 samples with 1 evaluation.
 """
 
 prob1 = ODEProblem(bgk_ode!, f0, tspan, [M0, τ0])
-data_bgk = solve(prob1, Tsit5(), saveat = tsteps) |> Array
+data_bgk = solve(prob1, Tsit5(); saveat=tsteps) |> Array
 
 #@benchmark solve(prob1, Tsit5(), saveat = tsteps) |> Array
 """
@@ -94,15 +94,13 @@ BenchmarkTools.Trial: 145 samples with 1 evaluation.
 data_boltz_1D = zeros(axes(data_boltz, 1), axes(data_boltz, 4))
 data_bgk_1D = zeros(axes(data_bgk, 1), axes(data_bgk, 4))
 for j in axes(data_boltz_1D, 2)
-    data_boltz_1D[:, j] .=
-        reduce_distribution(data_boltz[:, :, :, j], vs2.weights)
-    data_bgk_1D[:, j] .=
-        reduce_distribution(data_bgk[:, :, :, j], vs2.weights)
+    data_boltz_1D[:, j] .= reduce_distribution(data_boltz[:, :, :, j], vs2.weights)
+    data_bgk_1D[:, j] .= reduce_distribution(data_bgk[:, :, :, j], vs2.weights)
 end
 h0_1D, b0_1D = reduce_distribution(f0, vs3.v, vs3.w, vs2.weights)
 H0_1D, B0_1D = reduce_distribution(M0, vs3.v, vs3.w, vs2.weights)
 
-nn = FnChain(FnDense(vs.nu, vs.nu*4, tanh), FnDense(vs.nu*4, vs.nu))
+nn = FnChain(FnDense(vs.nu, vs.nu * 4, tanh), FnDense(vs.nu * 4, vs.nu))
 p0 = init_params(nn)
 
 #=function rhs!(df, f, p, t)
@@ -118,7 +116,7 @@ end
 
 function loss(p)
     ube = ODEProblem(rhs, h0_1D, tspan, p)
-    pred = solve(ube, Midpoint(), saveat = tsteps) |> Array
+    pred = solve(ube, Midpoint(); saveat=tsteps) |> Array
     loss = sum(abs2, data_boltz_1D .- pred)
 
     return loss
@@ -131,12 +129,12 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, p0, Adam(0.05); cb = cb, iters = 100, ad = AutoZygote())
-res = sci_train(loss, res.u, LBFGS(); cb = cb, iters = 100, ad = AutoZygote())
-res = sci_train(loss, res.u, Adam(0.01); cb = cb, iters = 100, ad = AutoZygote())
+res = sci_train(loss, p0, Adam(0.05); cb=cb, iters=100, ad=AutoZygote())
+res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=100, ad=AutoZygote())
+res = sci_train(loss, res.u, Adam(0.01); cb=cb, iters=100, ad=AutoZygote())
 
 ube = ODEProblem(rhs, h0_1D, tspan, p0)
-data_nn = solve(ube, Tsit5(), u0 = h0_1D, p = res.u, saveat = tsteps) |> Array
+data_nn = solve(ube, Tsit5(); u0=h0_1D, p=res.u, saveat=tsteps) |> Array
 
 #@benchmark solve(ube, Tsit5(), saveat = tsteps) |> Array
 """
@@ -155,36 +153,17 @@ BenchmarkTools.Trial: 825 samples with 1 evaluation.
 idx = 21
 plot(
     vs.u,
-    data_boltz_1D[:, 1],
-    lw = 1.5,
-    label = "initial",
-    color = :gray32,
-    xlabel = "u",
-    ylabel = "particle distribution",
+    data_boltz_1D[:, 1];
+    lw=1.5,
+    label="initial",
+    color=:gray32,
+    xlabel="u",
+    ylabel="particle distribution",
 )
-plot!(
-    vs.u,
-    data_boltz_1D[:, idx],
-    lw = 1.5,
-    label = "Boltzmann",
-    color = 1,
-)
-plot!(
-    vs.u,
-    data_bgk_1D[:, idx],
-    lw = 1.5,
-    line = :dash,
-    label = "BGK",
-    color = 2,
-)
-plot!(
-    vs.u,
-    H0_1D,
-    lw = 1.5,
-    label = "Maxwellian",
-    color = 10,
-)
-scatter!(vs.u, data_nn[:, idx], lw = 1.5, label = "neural", color = 3, alpha = 0.7)
+plot!(vs.u, data_boltz_1D[:, idx]; lw=1.5, label="Boltzmann", color=1)
+plot!(vs.u, data_bgk_1D[:, idx]; lw=1.5, line=:dash, label="BGK", color=2)
+plot!(vs.u, H0_1D; lw=1.5, label="Maxwellian", color=10)
+scatter!(vs.u, data_nn[:, idx]; lw=1.5, label="neural", color=3, alpha=0.7)
 
 using KitBase.JLD2
 cd(@__DIR__)

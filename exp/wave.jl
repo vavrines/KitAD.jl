@@ -38,32 +38,32 @@ function rhs!(df, f, p, t)
     nu = size(f, 1)
     nx = size(f, 2)
 
-    flux = zeros(nu, nx+1)
-    for j = 2:nx
-        for i = 1:nu÷2
+    flux = zeros(nu, nx + 1)
+    for j in 2:nx
+        for i in 1:nu÷2
             flux[i, j] = u[i] * f[i, j]
         end
-        for i = nu÷2+1:nu
+        for i in nu÷2+1:nu
             flux[i, j] = u[i] * f[i, j-1]
         end
     end
-    for i = nu÷2+1:nu
+    for i in nu÷2+1:nu
         flux[i, 1] = u[i] * f[i, nx]
         flux[i, nx+1] = u[i] * f[i, nx]
     end
-    for i = 1:nu÷2
+    for i in 1:nu÷2
         flux[i, 1] = u[i] * f[i, 1]
         flux[i, nx+1] = u[i] * f[i, 1]
     end
 
     w = reduce(hcat, map(1:nx) do i
-        KA.moments_conserve(f[:, i], u, weights)
+        return KA.moments_conserve(f[:, i], u, weights)
     end)
     prim = reduce(hcat, map(1:nx) do i
-        KA.conserve_prim(w[:, i], 3)
+        return KA.conserve_prim(w[:, i], 3)
     end)
     M = reduce(hcat, map(1:nx) do i
-        KB.maxwellian(u, prim[:, i])
+        return KB.maxwellian(u, prim[:, i])
     end)
 
     for j in axes(f, 2)
@@ -78,7 +78,7 @@ end
 
 p0 = [0.01]
 prob0 = ODEProblem(rhs!, f0, tspan, p0)
-sol0 = solve(prob0, Tsit5(), saveat = tran) |> Array
+sol0 = solve(prob0, Tsit5(); saveat=tran) |> Array
 
 using Plots
 solw0 = zeros(ps.nx, 3)
@@ -86,12 +86,12 @@ for i in axes(solw0, 1)
     _w = KA.moments_conserve(sol0[:, i, end], u, weights)
     solw0[i, :] .= KA.conserve_prim(_w, 3)
 end
-plot(ps.x, solw0[:, 1], label = "ρ")
+plot(ps.x, solw0[:, 1]; label="ρ")
 plot!(ps.x, prim0[1, :])
 
 function loss(p)
     prob = ODEProblem(rhs!, f0, tspan, p)
-    sol = solve(prob, Euler(), saveat = tran, dt = dt) |> Array
+    sol = solve(prob, Euler(); saveat=tran, dt=dt) |> Array
     l = sum(abs2, sol .- sol0)
 
     return l
@@ -104,7 +104,7 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, [10.0], Adam(); cb = cb, iters = 200, ad = AutoZygote())
-res = sci_train(loss, res.u, LBFGS(); cb = cb, iters = 50, ad = AutoZygote())
+res = sci_train(loss, [10.0], Adam(); cb=cb, iters=200, ad=AutoZygote())
+res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=50, ad=AutoZygote())
 
 @show res.u

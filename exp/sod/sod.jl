@@ -56,7 +56,7 @@ begin
     )
     sole_prim = zeros(3, ps.nx)
     sole_cons = zeros(3, ps.nx)
-    for i = 1:ps.nx
+    for i in 1:ps.nx
         sole_prim[1, i] = _s[i].rho
         sole_prim[2, i] = _s[i].u
         sole_prim[3, i] = _s[i].rho / (_s[i].p * 2)
@@ -81,7 +81,7 @@ function rhs!(dw, w, p, t)
     nx = size(w, 2)
 
     flux = zeros(3, nx + 1)
-    @inbounds for j = 2:nx
+    @inbounds for j in 2:nx
         fw = @view flux[:, j]
         wL = @view w[:, j-1]
         wR = @view w[:, j]
@@ -89,7 +89,7 @@ function rhs!(dw, w, p, t)
         flux_opt!(fw, wL, wR, p[j])
     end
 
-    @inbounds for j = 2:nx-1
+    @inbounds for j in 2:nx-1
         for i in axes(w, 1)
             dw[i, j] = (flux[i, j] - flux[i, j+1]) / dx
         end
@@ -98,13 +98,13 @@ function rhs!(dw, w, p, t)
     return nothing
 end
 
-p0 = ones(Float64, ps.nx+1) .* 5
+p0 = ones(Float64, ps.nx + 1) .* 5
 prob0 = ODEProblem(rhs!, w0, tspan, p0)
-sol0 = solve(prob0, Tsit5(), saveat = tspan[2]) |> Array
+sol0 = solve(prob0, Tsit5(); saveat=tspan[2]) |> Array
 
 function loss(p)
     prob = ODEProblem(rhs!, w0, tspan, p)
-    sol = solve(prob, Euler(), saveat = tspan[end], dt = dt)
+    sol = solve(prob, Euler(); saveat=tspan[end], dt=dt)
     l = sum(abs2, sol.u[end] .- sole_cons)
 
     return l
@@ -117,14 +117,14 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, p0, Adam(0.05); cb = cb, iters = 100, ad = AutoZygote())
-res = sci_train(loss, res.u, AdamW(0.01); cb = cb, iters = 100, ad = AutoZygote())
+res = sci_train(loss, p0, Adam(0.05); cb=cb, iters=100, ad=AutoZygote())
+res = sci_train(loss, res.u, AdamW(0.01); cb=cb, iters=100, ad=AutoZygote())
 #
 # ~ 0.30x
 #
 
 prob1 = ODEProblem(rhs!, w0, tspan, res.u)
-sol1 = solve(prob1, Tsit5(), saveat = tspan[2]) |> Array
+sol1 = solve(prob1, Tsit5(); saveat=tspan[2]) |> Array
 
 begin
     using Plots
@@ -142,9 +142,9 @@ end
 
 begin
     idx = 1
-    plot(ps.x[1:ps.nx], solprim0[:, idx], label = "original")
-    plot!(ps.x[1:ps.nx], solprim1[:, idx], label = "optimized")
-    plot!(ps.x[1:ps.nx], sole_prim[idx, :], label = "exact")
+    plot(ps.x[1:ps.nx], solprim0[:, idx]; label="original")
+    plot!(ps.x[1:ps.nx], solprim1[:, idx]; label="optimized")
+    plot!(ps.x[1:ps.nx], sole_prim[idx, :]; label="exact")
 end
 
 plot(ps.x[2:ps.nx], res.u[2:ps.nx])

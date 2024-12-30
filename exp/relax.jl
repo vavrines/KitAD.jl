@@ -30,15 +30,15 @@ function bgk!(df, f, p, t)
     prim = KB.conserve_prim(w, 3)
     M = KB.maxwellian(vs.u, prim)
     tau = p[1]
-    df .= (M .- f) ./ tau
+    return df .= (M .- f) ./ tau
 end
 
 prob0 = ODEProblem(bgk!, f0, tspan, p0)
-sol0 = solve(prob0, Tsit5(), saveat = tran) |> Array
+sol0 = solve(prob0, Tsit5(); saveat=tran) |> Array
 
 function loss(p)
     prob = ODEProblem(bgk!, f0, tspan, p)
-    sol = solve(prob, Tsit5(), saveat = tran) |> Array
+    sol = solve(prob, Tsit5(); saveat=tran) |> Array
     l = sum(abs2, sol .- sol0)
 
     return l
@@ -49,7 +49,7 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, [10.0], Adam(); cb = cb, iters = 1000, ad = AutoZygote())
-res = sci_train(loss, res.u, LBFGS(); cb = cb, iters = 1000, ad = AutoZygote())
+res = sci_train(loss, [10.0], Adam(); cb=cb, iters=1000, ad=AutoZygote())
+res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=1000, ad=AutoZygote())
 
 @show res.u

@@ -5,19 +5,7 @@ using Optim: LBFGS
 using Base.Threads: @threads
 using KitBase
 
-function flux_opt!(
-    fw,
-    wL,
-    wR,
-    inK,
-    γ,
-    μᵣ,
-    ω,
-    dt,
-    dxL,
-    dxR,
-)
-
+function flux_opt!(fw, wL, wR, inK, γ, μᵣ, ω, dt, dxL, dxR)
     primL = conserve_prim(wL, γ)
     primR = conserve_prim(wR, γ)
 
@@ -39,10 +27,8 @@ function flux_opt!(
     gaL = KB.pdf_slope(prim, sw0L, inK)
     gaR = KB.pdf_slope(prim, sw0R, inK)
     sw =
-        -prim[1] .* (
-            KB.moments_conserve_slope(gaL, MuL, Mv, Mw, 1, 0, 0) .+
-            KB.moments_conserve_slope(gaR, MuR, Mv, Mw, 1, 0, 0)
-        )
+        -prim[1] .* (KB.moments_conserve_slope(gaL, MuL, Mv, Mw, 1, 0, 0) .+
+         KB.moments_conserve_slope(gaR, MuR, Mv, Mw, 1, 0, 0))
     gaT = KB.pdf_slope(prim, sw, inK)
 
     # time-integration constants
@@ -74,11 +60,11 @@ function flux_opt!(
 end
 
 ps = PSpace1D(-0.5, 0.5, 500, 0)
-gas = Gas(Kn = 5e-3, K = 1.0)
+gas = Gas(; Kn=5e-3, K=1.0)
 
 w0 = zeros(4, ps.nx)
 prim0 = zeros(4, ps.nx)
-for i = 1:ps.nx
+for i in 1:ps.nx
     if ps.x[i] <= 0
         prim0[:, i] .= [1.0, 0.0, 1.0, 1.0]
     else
@@ -98,8 +84,8 @@ function rhs!(dw, w, p, t)
     ps, gas = p
     nx = size(w, 2)
 
-    flux = zeros(4, nx+1)
-    @inbounds @threads for j = 2:nx
+    flux = zeros(4, nx + 1)
+    @inbounds @threads for j in 2:nx
         fw = @view flux[:, j]
         flux_opt!(
             fw,
@@ -115,8 +101,8 @@ function rhs!(dw, w, p, t)
         )
     end
 
-    @inbounds @threads for j = 2:nx-1
-        for i = 1:4
+    @inbounds @threads for j in 2:nx-1
+        for i in 1:4
             dw[i, j] = (flux[i, j] - flux[i, j+1]) / ps.dx[j]
         end
     end
@@ -126,7 +112,7 @@ end
 
 p = (ps, gas)
 prob = ODEProblem(rhs!, w0, tspan, p)
-res = solve(prob, Tsit5(), saveat = tran)
+res = solve(prob, Tsit5(); saveat=tran)
 resArr = Array(res)
 
 # field

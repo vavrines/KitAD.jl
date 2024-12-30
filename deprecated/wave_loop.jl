@@ -40,22 +40,22 @@ function rhs(f, p, t)
     nx = size(f, 2)
 
     flux = reduce(hcat, map(2:nx) do i
-        KA.flux_kfvs.(f[:, i-1], f[:, i], u)
+        return KA.flux_kfvs.(f[:, i-1], f[:, i], u)
     end)
     flux = hcat(KA.flux_kfvs.(f[:, nx], f[:, 1], u), flux)
     flux = hcat(flux, KA.flux_kfvs.(f[:, nx], f[:, 1], u))
 
     w = reduce(hcat, map(1:nx) do i
-        KA.moments_conserve(f[:, i], u, weights)
+        return KA.moments_conserve(f[:, i], u, weights)
     end)
     prim = reduce(hcat, map(1:nx) do i
-        KA.conserve_prim(w[:, i], 3)
+        return KA.conserve_prim(w[:, i], 3)
     end)
     M = reduce(hcat, map(1:nx) do i
-        KB.maxwellian(u, prim[:, i])
+        return KB.maxwellian(u, prim[:, i])
     end)
     tau = reduce(hcat, map(1:nx) do i
-        mu * 2.0 * prim[end, i]^0.5 / prim[1, i]
+        return mu * 2.0 * prim[end, i]^0.5 / prim[1, i]
     end)
 
     df = @. (flux[:, 1:nx] - flux[:, 2:nx+1]) / dx + (M - f) / tau
@@ -64,12 +64,12 @@ function rhs(f, p, t)
 end
 
 prob0 = ODEProblem(rhs, f0, tspan, p0)
-sol0 = solve(prob0, Euler(), saveat = tran, dt = dt) |> Array
+sol0 = solve(prob0, Euler(); saveat=tran, dt=dt) |> Array
 solf = sol0[:, :, end]
 
 function loss(p)
     f = deepcopy(f0)
-    for iter = 1:20
+    for iter in 1:20
         fn = deepcopy(f)
         df = rhs(f, p, 0.0)
         f = @. fn + df * dt
@@ -86,6 +86,6 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, [1.0], Adam(); cb = cb, iters = 1000, ad = AutoZygote())
+res = sci_train(loss, [1.0], Adam(); cb=cb, iters=1000, ad=AutoZygote())
 
 @show res.u

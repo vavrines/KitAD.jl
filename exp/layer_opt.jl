@@ -33,11 +33,11 @@ nn = FnChain(FnDense(8, 24, tanh), FnDense(24, 4, sigmoid))
 p0 = init_params(nn) #.|> Float64
 
 ps = PSpace1D(-0.5, 0.5, 500, 0)
-gas = Gas(Kn = 5e-3, K = 1.0)
+gas = Gas(; Kn=5e-3, K=1.0)
 
 w0 = zeros(4, ps.nx)
 prim0 = zeros(4, ps.nx)
-for i = 1:ps.nx
+for i in 1:ps.nx
     if ps.x[i] <= 0
         prim0[:, i] .= [1.0, 0.0, 1.0, 1.0]
     else
@@ -61,13 +61,13 @@ K = gas.K
 function rhs0!(dw, w, p, t)
     nx = size(w, 2)
 
-    flux = zeros(4, nx+1)
-    for j = 2:nx
+    flux = zeros(4, nx + 1)
+    for j in 2:nx
         flux[:, j] .= flux_basis(w[:, j-1], w[:, j])
     end
 
-    for j = 2:nx-1
-        for i = 1:4
+    for j in 2:nx-1
+        for i in 1:4
             dw[i, j] = (flux[i, j] - flux[i, j+1]) / dx
         end
     end
@@ -77,14 +77,14 @@ end
 function rhs!(dw, w, p, t)
     nx = size(w, 2)
 
-    flux = zeros(4, nx+1)
-    for j = 2:nx
+    flux = zeros(4, nx + 1)
+    for j in 2:nx
         flux[:, j] .= flux_basis(w[:, j-1], w[:, j])
         flux[:, j] .*= nn(vcat(w[:, j-1], w[:, j]), p)
     end
 
-    for j = 2:nx-1
-        for i = 1:4
+    for j in 2:nx-1
+        for i in 1:4
             dw[i, j] = (flux[i, j] - flux[i, j+1]) / dx
         end
     end
@@ -94,7 +94,7 @@ end
 
 function loss(p)
     prob = ODEProblem(rhs!, w0, tspan, p)
-    sol = solve(prob, Euler(), saveat = tran, dt = dt) |> Array
+    sol = solve(prob, Euler(); saveat=tran, dt=dt) |> Array
     l = sum(abs2, sol .- resArr)
 
     return l
@@ -107,21 +107,19 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, p0, Adam(0.05); cb = cb, iters = 50, ad = AutoZygote())
-res = sci_train(loss, res.u, Adam(0.05); cb = cb, iters = 50, ad = AutoZygote())
-
+res = sci_train(loss, p0, Adam(0.05); cb=cb, iters=50, ad=AutoZygote())
+res = sci_train(loss, res.u, Adam(0.05); cb=cb, iters=50, ad=AutoZygote())
 
 prob0 = ODEProblem(rhs0!, w0, tspan, res.u)
-sol0 = solve(prob0, Euler(), saveat = tran, dt = dt) |> Array
+sol0 = solve(prob0, Euler(); saveat=tran, dt=dt) |> Array
 
 prob = ODEProblem(rhs!, w0, tspan, res.u)
-sol = solve(prob, Euler(), saveat = tran, dt = dt) |> Array
+sol = solve(prob, Euler(); saveat=tran, dt=dt) |> Array
 
 idx = 4
 plot(ps.x, 1 ./ sol[idx, :, end])
 plot!(ps.x, 1 ./ sol0[idx, :, end])
 plot!(ps.x, 1 ./ resArr[idx, :, end])
-
 
 u = res.u
 @save "layer_param.jld2" u
