@@ -1,13 +1,25 @@
-using OrdinaryDiffEq, KitBase
-using CairoMakie, NipponColors
-using KitBase.JLD2
+"""
+Optimization of numerical flux function for Euler equations
+
+"""
+
+using OrdinaryDiffEq, SciMLSensitivity, Solaris
+using Solaris.Lux
 using Flux: sigmoid
+import KitAD as KA
+import KitBase as KB
 
 const γ = 5 / 3
 
-function flux_opt!(fw, wL, wR, p)
-    Mt = zeros(2)
-    Mt[2] = sigmoid(p)
+nn = Chain(Dense(6, 12, tanh), Dense(12, 12, tanh), Dense(12, 1, sigmoid))
+ps, st = SR.setup(nn)
+ps = ComponentArray(ps)
+model = Lux.StatefulLuxLayer{true}(nn, ps, st)
+
+function flux_opt!(fw, wL, wR, nn, p)
+    Mt = zeros(Float32, 2)
+    #Mt[2] = sigmoid(p)
+    Mt[2] = model([wL; wR], p)[1]
     Mt[1] = 1.0 - Mt[2]
 
     primL = KB.conserve_prim(wL, γ)
@@ -81,7 +93,7 @@ function rhs!(dw, w, p, t)
         wL = @view w[:, j-1]
         wR = @view w[:, j]
         #flux_opt!(fw, wL, wR, p[1])
-        flux_opt!(fw, wL, wR, p[j])
+        flux_opt!(fw, wL, wR, nn, p)
     end
 
     @inbounds for j in 2:nx-1
@@ -93,17 +105,36 @@ function rhs!(dw, w, p, t)
     return nothing
 end
 
-p0 = ones(Float64, ps.nx + 1) .* 5
-prob0 = ODEProblem(rhs!, w0, tspan, p0)
+pv = ComponentArray(p0)
+prob0 = ODEProblem(rhs!, w0, tspan, pv)
 sol0 = solve(prob0, Tsit5(); saveat=tspan[2]) |> Array
 
-cd(@__DIR__)
-@load "sodpara.jld2" u
+function loss(p)
+    prob = ODEProblem(rhs!, w0, tspan, p)
+    sol = solve(prob, Euler(); saveat=tspan[end], dt=dt)
+    l = sum(abs2, sol.u[end] .- sole_cons)
 
-prob1 = ODEProblem(rhs!, w0, tspan, u)
+    return l
+end
+
+loss(pv)
+
+cb = function (p, l)
+    println("loss: $(l)")
+    return false
+end
+
+res = sci_train(loss, p0, Adam(0.05); cb=cb, iters=100, ad=AutoZygote())
+res = sci_train(loss, res.u, AdamW(0.01); cb=cb, iters=100, ad=AutoZygote())
+#
+# ~ 0.30x
+#
+
+prob1 = ODEProblem(rhs!, w0, tspan, res.u)
 sol1 = solve(prob1, Tsit5(); saveat=tspan[2]) |> Array
 
 begin
+    using Plots
     solcons0 = zeros(ps.nx, 3)
     solcons1 = zeros(ps.nx, 3)
     solprim0 = zeros(ps.nx, 3)
@@ -111,58 +142,21 @@ begin
     for i in axes(solprim0, 1)
         solcons0[i, :] .= sol0[:, i, end]
         solcons1[i, :] .= sol1[:, i, end]
-        solprim0[i, :] .= conserve_prim(sol0[:, i, end], γ)
-        solprim1[i, :] .= conserve_prim(sol1[:, i, end], γ)
+        solprim0[i, :] .= KB.conserve_prim(sol0[:, i, end], γ)
+        solprim1[i, :] .= KB.conserve_prim(sol1[:, i, end], γ)
     end
 end
 
-D = dict_color()
-
 begin
     idx = 1
-    f = Figure()
-    ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
-    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
-    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
-    lines!(
-        ax,
-        ps.x[1:ps.nx],
-        sole_prim[idx, :];
-        color=D["ro"],
-        linestyle=:dash,
-        label="exact",
-    )
-    axislegend(; position=:rt)
-    f
+    plot(ps.x[1:ps.nx], solprim0[:, idx]; label="original")
+    plot!(ps.x[1:ps.nx], solprim1[:, idx]; label="optimized")
+    plot!(ps.x[1:ps.nx], sole_prim[idx, :]; label="exact")
 end
 
-begin
-    idx = 3
-    f = Figure()
-    ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
-    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
-    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
-    lines!(
-        ax,
-        ps.x[1:ps.nx],
-        sole_prim[idx, :];
-        color=D["ro"],
-        linestyle=:dash,
-        label="exact",
-    )
-    axislegend(; position=:rt)
-    f
-end
+plot(ps.x[2:ps.nx], res.u[2:ps.nx])
 
-rup = sigmoid.(u)
-rce = 1 .- rup
-
-begin
-    idx = 1
-    f = Figure()
-    ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
-    lines!(ax, ps.x[1:ps.nx-1], rup[2:ps.nx]; color=D["asagi"], label="upwind")
-    lines!(ax, ps.x[1:ps.nx-1], rce[2:ps.nx]; color=D["tohoh"], label="central")
-    axislegend(; position=:lt)
-    f
-end
+using KitBase.JLD2
+cd(@__DIR__)
+u = res.u
+@save "sodpara.jld2" u # ~ -1.9244146828496453
