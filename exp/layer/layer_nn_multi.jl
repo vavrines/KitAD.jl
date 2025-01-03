@@ -106,7 +106,7 @@ end
 function loss_tv(sol)
     dx = size(sol, 2)
     dt = size(sol, 3)
-    tv = 0.f0
+    tv = 0.0f0
     for i in 1:dt
         for j in 1:dx-1
             tv += abs(sol[1, j+1, i] - sol[1, j, i])
