@@ -1,3 +1,2 @@
 Manifest.toml
-exp/*.jld2
-exp/sod/sodpara.jld2
+*.jld2

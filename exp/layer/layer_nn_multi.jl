@@ -5,11 +5,6 @@ Machine learning assisted modeling for hydrodynamic closure
 
 using OrdinaryDiffEq, KitBase, SciMLSensitivity, Solaris
 using KitBase.JLD2
-using Optimization: AutoZygote
-using Optimisers: Adam
-using Optim: LBFGS
-using Base.Threads: @threads
-using Plots
 using Solaris.Flux: sigmoid
 import KitAD as KA
 
@@ -28,15 +23,17 @@ end
 cd(@__DIR__)
 @load "layer_ktsol.jld2" resArr
 
-nn = FnChain(FnDense(8, 24, tanh), FnDense(24, 4, sigmoid))
-#nn = FnChain(FnDense(8, 24, tanh), FnDense(24, 4))
+#newrun = true
+newrun = false
+
+nn = FnChain(FnDense(8, 32, tanh), FnDense(32, 4, sigmoid))
 p0 = init_params(nn) #.|> Float64
 
-ps = PSpace1D(-0.5, 0.5, 500, 0)
+ps = PSpace1D(-0.1, 0.1, 80, 0)
 gas = Gas(; Kn=5e-3, K=1.0)
 
-w0 = zeros(4, ps.nx)
-prim0 = zeros(4, ps.nx)
+w0 = zeros(Float32, 4, ps.nx)
+prim0 = zeros(Float32, 4, ps.nx)
 for i in 1:ps.nx
     if ps.x[i] <= 0
         prim0[:, i] .= [1.0, 0.0, 1.0, 1.0]
@@ -47,21 +44,23 @@ for i in 1:ps.nx
     w0[:, i] .= prim_conserve(prim0[:, i], gas.γ)
 end
 
-τ0 = vhs_collision_time(prim0[:, 1], gas.μᵣ, gas.ω)
-tmax = 10τ0
-tspan = (0.0, tmax)
-dt = 0.5 * ps.dx[1] / 5
-tran = tspan[1]:dt*10:tspan[end]
-dx = ps.dx[1]
-K = gas.K
-γ = gas.γ
-μᵣ = gas.μᵣ
-ω = gas.ω
+begin
+    τ0 = vhs_collision_time(prim0[:, 1], gas.μᵣ, gas.ω)
+    tmax = 10τ0
+    tspan = (0.0, tmax)
+    dt = tmax / 20 / 10
+    tran = tspan[1]:dt*10:tspan[end]
+    dx = ps.dx[1]
+    K = gas.K
+    γ = gas.γ
+    μᵣ = gas.μᵣ
+    ω = gas.ω
+end
 
 function rhs0!(dw, w, p, t)
     nx = size(w, 2)
 
-    flux = zeros(4, nx + 1)
+    flux = zeros(Float32, 4, nx + 1)
     for j in 2:nx
         flux[:, j] .= flux_basis(w[:, j-1], w[:, j])
     end
@@ -77,7 +76,7 @@ end
 function rhs!(dw, w, p, t)
     nx = size(w, 2)
 
-    flux = zeros(4, nx + 1)
+    flux = zeros(Float32, 4, nx + 1)
     for j in 2:nx
         flux[:, j] .= flux_basis(w[:, j-1], w[:, j])
         flux[:, j] .*= nn(vcat(w[:, j-1], w[:, j]), p)
@@ -86,6 +85,8 @@ function rhs!(dw, w, p, t)
     for j in 2:nx-1
         for i in 1:4
             dw[i, j] = (flux[i, j] - flux[i, j+1]) / dx
+            dw[i, 1] = 0.0
+            dw[i, nx] = 0.0
         end
     end
 
@@ -96,30 +97,47 @@ function loss(p)
     prob = ODEProblem(rhs!, w0, tspan, p)
     sol = solve(prob, Euler(); saveat=tran, dt=dt) |> Array
     l = sum(abs2, sol .- resArr)
+    l += sum(abs2, p) * 1e-5
+    l += loss_tv(sol) * 1e-3
 
     return l
 end
 
-loss(p0)
+function loss_tv(sol)
+    dx = size(sol, 2)
+    dt = size(sol, 3)
+    tv = 0.f0
+    for i in 1:dt
+        for j in 1:dx-1
+            tv += abs(sol[1, j+1, i] - sol[1, j, i])
+        end
+    end
+
+    return tv
+end
 
 cb = function (p, l)
     println("loss: $(l)")
+    if l < M
+        global M = l
+        #u = p
+        #@save "layer_param.jld2" u
+    end
+
     return false
 end
 
-res = sci_train(loss, p0, Adam(0.05); cb=cb, iters=50, ad=AutoZygote())
-res = sci_train(loss, res.u, Adam(0.05); cb=cb, iters=50, ad=AutoZygote())
+if newrun
+    u = deepcopy(p0)
+else
+    @load "layer_param.jld2" u
+end
 
-prob0 = ODEProblem(rhs0!, w0, tspan, res.u)
-sol0 = solve(prob0, Euler(); saveat=tran, dt=dt) |> Array
+global M = loss(u)
 
-prob = ODEProblem(rhs!, w0, tspan, res.u)
-sol = solve(prob, Euler(); saveat=tran, dt=dt) |> Array
-
-idx = 4
-plot(ps.x, 1 ./ sol[idx, :, end])
-plot!(ps.x, 1 ./ sol0[idx, :, end])
-plot!(ps.x, 1 ./ resArr[idx, :, end])
+GC.@preserve res = sci_train(loss, u, AdamW(0.01); cb=cb, iters=30, ad=AutoZygote())
+GC.@preserve res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=20, ad=AutoZygote())
+GC.@preserve res = sci_train(loss, res.u, AdamW(0.005); cb=cb, iters=100, ad=AutoZygote())
 
 u = res.u
 @save "layer_param.jld2" u

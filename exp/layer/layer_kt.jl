@@ -17,7 +17,7 @@ function df!(dh, db, h, b, fhL, fbL, fhR, fbR, u, v, weights, K, γ, μᵣ, ω, 
     return nothing
 end
 
-ps = PSpace1D(-0.5, 0.5, 500, 0)
+ps = PSpace1D(-0.1, 0.1, 80, 0)
 vs = VSpace2D(-5, 5, 28, -5, 5, 64)
 gas = Gas(; Kn=5e-3, K=1.0)
 
@@ -37,10 +37,10 @@ for i in 1:ps.nx
 end
 
 τ0 = vhs_collision_time(prim0[:, 1], gas.μᵣ, gas.ω)
-tmax = 10τ0#tmax = 50τ0
+tmax = 10τ0
+#tmax = 15τ0
 tspan = (0.0, tmax)
-dt = 0.5 * ps.dx[1] / 5
-tran = tspan[1]:dt*10:tspan[end]
+tran = tspan[1]:tmax/20:tspan[end]
 
 function rhs!(df, f, p, t)
     ps, vs, gas = p
@@ -97,7 +97,7 @@ end
 
 p = (ps, vs, gas)
 prob = ODEProblem(rhs!, f0, tspan, p)
-res = solve(prob, Tsit5(); saveat=tran)
+res = solve(prob, Midpoint(); saveat=tran)
 
 resArr = zeros(4, ps.nx, length(tran))
 for j in 1:length(tran)

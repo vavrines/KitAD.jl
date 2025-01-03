@@ -4,9 +4,6 @@ Quantifying the Knuden number of the reference state in the wave propagation pro
 """
 
 using OrdinaryDiffEq, SciMLSensitivity, Solaris
-using Optimization: AutoZygote
-using Optimisers: Adam
-using Optim: LBFGS
 import KitAD as KA
 import KitBase as KB
 
@@ -104,7 +101,9 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, [10.0], Adam(); cb=cb, iters=200, ad=AutoZygote())
+res = sci_train(loss, [10.0], Adam(0.05); cb=cb, iters=200, ad=AutoZygote())
 res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=50, ad=AutoZygote())
 
 @show res.u
+
+"""~[0.00985713179259482]"""

@@ -1,9 +1,5 @@
-using OrdinaryDiffEq, SciMLSensitivity, Solaris
-using Optimization: AutoZygote
-using Optimisers: Adam
-using Optim: LBFGS
+using OrdinaryDiffEq, KitBase
 using Base.Threads: @threads
-using KitBase
 
 function flux_opt!(fw, wL, wR, inK, γ, μᵣ, ω, dt, dxL, dxR)
     primL = conserve_prim(wL, γ)
@@ -59,7 +55,7 @@ function flux_opt!(fw, wL, wR, inK, γ, μᵣ, ω, dt, dxL, dxR)
     return nothing
 end
 
-ps = PSpace1D(-0.5, 0.5, 500, 0)
+ps = PSpace1D(-0.1, 0.1, 80, 0)
 gas = Gas(; Kn=5e-3, K=1.0)
 
 w0 = zeros(4, ps.nx)
@@ -77,8 +73,8 @@ end
 τ0 = vhs_collision_time(prim0[:, 1], gas.μᵣ, gas.ω)
 tmax = 10τ0
 tspan = (0.0, tmax)
-dt = 0.5 * ps.dx[1] / 5
-tran = tspan[1]:dt*10:tspan[end]
+dt = tmax / 20 / 10
+tran = tspan[1]:tmax/20:tspan[end]
 
 function rhs!(dw, w, p, t)
     ps, gas = p
@@ -126,3 +122,7 @@ end
 
 using Plots
 plot(ps.x[1:ps.nx], sol[:, 1])
+
+using KitBase.JLD2
+cd(@__DIR__)
+@save "layer_nssol.jld2" resArr
