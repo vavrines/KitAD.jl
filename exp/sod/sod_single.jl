@@ -85,8 +85,8 @@ function rhs!(dw, w, p, t)
         fw = @view flux[:, j]
         wL = @view w[:, j-1]
         wR = @view w[:, j]
-        #flux_opt!(fw, wL, wR, p[1])
-        flux_opt!(fw, wL, wR, p[j])
+        flux_opt!(fw, wL, wR, p[1])
+        #flux_opt!(fw, wL, wR, p[j])
     end
 
     @inbounds for j in 2:nx-1
@@ -98,7 +98,8 @@ function rhs!(dw, w, p, t)
     return nothing
 end
 
-p0 = ones(Float64, ps.nx + 1) .* 5
+#p0 = ones(Float64, ps.nx + 1) .* 5
+p0 = ones(Float64, 1) .* 5
 prob0 = ODEProblem(rhs!, w0, tspan, p0)
 sol0 = solve(prob0, Tsit5(); saveat=tspan[2]) |> Array
 
@@ -152,4 +153,4 @@ plot(ps.x[2:ps.nx], res.u[2:ps.nx])
 using KitBase.JLD2
 cd(@__DIR__)
 u = res.u
-@save "sodpara.jld2" u # ~ -1.9244146828496453
+@save "sod_single.jld2" u # ~ -1.9244146828496453
