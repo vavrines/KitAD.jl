@@ -153,7 +153,7 @@ begin
         linestyle=:dash,
         label="exact",
     )
-    axislegend(; position=:rt)
+    axislegend(; position=:lt)
     f
 end
 #save("sod_velocity.pdf", f)
@@ -172,7 +172,7 @@ begin
         linestyle=:dash,
         label="exact",
     )
-    axislegend(; position=:rt)
+    axislegend(; position=:lt)
     f
 end
 #save("sod_temperature.pdf", f)
@@ -291,7 +291,7 @@ begin
         linestyle=:dash,
         label="exact",
     )
-    axislegend(; position=:rt)
+    axislegend(; position=:lt)
     f
 end
 #save("sod1_velocity.pdf", f)
@@ -310,7 +310,7 @@ begin
         linestyle=:dash,
         label="exact",
     )
-    axislegend(; position=:rt)
+    axislegend(; position=:lt)
     f
 end
 #save("sod1_temperature.pdf", f)
