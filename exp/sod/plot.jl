@@ -49,14 +49,12 @@ begin
         KB.PrimitiveValue(),
         1e-12,
     )
-    sole_prim = zeros(3, ps.nx)
-    sole_cons = zeros(3, ps.nx)
+    sole_prim = zeros(4, ps.nx)
     for i in 1:ps.nx
         sole_prim[1, i] = _s[i].rho
         sole_prim[2, i] = _s[i].u
-        sole_prim[3, i] = _s[i].rho / (_s[i].p * 2)
-
-        sole_cons[:, i] .= KB.prim_conserve(sole_prim[:, i], γ)
+        sole_prim[3, i] = (_s[i].p * 2) / _s[i].rho
+        sole_prim[4, i] = 0.5 * sole_prim[1, i] * sole_prim[3, i]
     end
 end
 
@@ -98,7 +96,7 @@ prob0 = ODEProblem(rhs!, w0, tspan, p0)
 sol0 = solve(prob0, Tsit5(); saveat=tspan[2]) |> Array
 
 cd(@__DIR__)
-@load "sodpara.jld2" u
+@load "sod_multi.jld2" u
 
 prob1 = ODEProblem(rhs!, w0, tspan, u)
 sol1 = solve(prob1, Tsit5(); saveat=tspan[2]) |> Array
@@ -106,13 +104,17 @@ sol1 = solve(prob1, Tsit5(); saveat=tspan[2]) |> Array
 begin
     solcons0 = zeros(ps.nx, 3)
     solcons1 = zeros(ps.nx, 3)
-    solprim0 = zeros(ps.nx, 3)
-    solprim1 = zeros(ps.nx, 3)
+    solprim0 = zeros(ps.nx, 4)
+    solprim1 = zeros(ps.nx, 4)
     for i in axes(solprim0, 1)
         solcons0[i, :] .= sol0[:, i, end]
         solcons1[i, :] .= sol1[:, i, end]
-        solprim0[i, :] .= conserve_prim(sol0[:, i, end], γ)
-        solprim1[i, :] .= conserve_prim(sol1[:, i, end], γ)
+        solprim0[i, 1:3] .= conserve_prim(sol0[:, i, end], γ)
+        solprim1[i, 1:3] .= conserve_prim(sol1[:, i, end], γ)
+        solprim0[i, 3] = 1 / solprim0[i, 3]
+        solprim1[i, 3] = 1 / solprim1[i, 3]
+        solprim0[i, 4] = 0.5 * solprim0[i, 1] * solprim0[i, 3]
+        solprim1[i, 4] = 0.5 * solprim1[i, 1] * solprim1[i, 3]
     end
 end
 
@@ -135,6 +137,26 @@ begin
     axislegend(; position=:rt)
     f
 end
+#save("sod_density.pdf", f)
+
+begin
+    idx = 2
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Velocity")
+    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
+    lines!(
+        ax,
+        ps.x[1:ps.nx],
+        sole_prim[idx, :];
+        color=D["ro"],
+        linestyle=:dash,
+        label="exact",
+    )
+    axislegend(; position=:rt)
+    f
+end
+#save("sod_velocity.pdf", f)
 
 begin
     idx = 3
@@ -153,16 +175,161 @@ begin
     axislegend(; position=:rt)
     f
 end
+#save("sod_temperature.pdf", f)
 
+begin
+    idx = 4
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Pressure")
+    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
+    lines!(
+        ax,
+        ps.x[1:ps.nx],
+        sole_prim[idx, :];
+        color=D["ro"],
+        linestyle=:dash,
+        label="exact",
+    )
+    axislegend(; position=:rt)
+    f
+end
+#save("sod_pressure.pdf", f)
+
+@load "sod_show.jld2" u
 rup = sigmoid.(u)
 rce = 1 .- rup
 
 begin
     idx = 1
     f = Figure()
-    ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Proportion")
     lines!(ax, ps.x[1:ps.nx-1], rup[2:ps.nx]; color=D["asagi"], label="upwind")
     lines!(ax, ps.x[1:ps.nx-1], rce[2:ps.nx]; color=D["tohoh"], label="central")
     axislegend(; position=:lt)
     f
 end
+#save("sod_proportion.pdf", f)
+
+
+function rhs1!(dw, w, p, t)
+    nx = size(w, 2)
+
+    flux = zeros(3, nx + 1)
+    @inbounds for j in 2:nx
+        fw = @view flux[:, j]
+        wL = @view w[:, j-1]
+        wR = @view w[:, j]
+        flux_opt!(fw, wL, wR, p[1])
+        #flux_opt!(fw, wL, wR, p[j])
+    end
+
+    @inbounds for j in 2:nx-1
+        for i in axes(w, 1)
+            dw[i, j] = (flux[i, j] - flux[i, j+1]) / dx
+        end
+    end
+
+    return nothing
+end
+
+p0 = ones(Float64, 1) .* 5
+prob0 = ODEProblem(rhs1!, w0, tspan, p0)
+sol0 = solve(prob0, Tsit5(); saveat=tspan[2]) |> Array
+
+@load "sod_single.jld2" u
+prob1 = ODEProblem(rhs1!, w0, tspan, u)
+sol1 = solve(prob1, Tsit5(); saveat=tspan[2]) |> Array
+
+begin
+    solcons0 = zeros(ps.nx, 3)
+    solcons1 = zeros(ps.nx, 3)
+    solprim0 = zeros(ps.nx, 4)
+    solprim1 = zeros(ps.nx, 4)
+    for i in axes(solprim0, 1)
+        solcons0[i, :] .= sol0[:, i, end]
+        solcons1[i, :] .= sol1[:, i, end]
+        solprim0[i, 1:3] .= conserve_prim(sol0[:, i, end], γ)
+        solprim1[i, 1:3] .= conserve_prim(sol1[:, i, end], γ)
+        solprim0[i, 3] = 1 / solprim0[i, 3]
+        solprim1[i, 3] = 1 / solprim1[i, 3]
+        solprim0[i, 4] = 0.5 * solprim0[i, 1] * solprim0[i, 3]
+        solprim1[i, 4] = 0.5 * solprim1[i, 1] * solprim1[i, 3]
+    end
+end
+
+begin
+    idx = 1
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
+    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
+    lines!(
+        ax,
+        ps.x[1:ps.nx],
+        sole_prim[idx, :];
+        color=D["ro"],
+        linestyle=:dash,
+        label="exact",
+    )
+    axislegend(; position=:rt)
+    f
+end
+#save("sod1_density.pdf", f)
+
+begin
+    idx = 2
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Velocity")
+    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
+    lines!(
+        ax,
+        ps.x[1:ps.nx],
+        sole_prim[idx, :];
+        color=D["ro"],
+        linestyle=:dash,
+        label="exact",
+    )
+    axislegend(; position=:rt)
+    f
+end
+#save("sod1_velocity.pdf", f)
+
+begin
+    idx = 3
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
+    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
+    lines!(
+        ax,
+        ps.x[1:ps.nx],
+        sole_prim[idx, :];
+        color=D["ro"],
+        linestyle=:dash,
+        label="exact",
+    )
+    axislegend(; position=:rt)
+    f
+end
+#save("sod1_temperature.pdf", f)
+
+begin
+    idx = 4
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Pressure")
+    lines!(ax, ps.x[1:ps.nx], solprim0[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solprim1[:, idx]; color=D["tohoh"], label="optimized")
+    lines!(
+        ax,
+        ps.x[1:ps.nx],
+        sole_prim[idx, :];
+        color=D["ro"],
+        linestyle=:dash,
+        label="exact",
+    )
+    axislegend(; position=:rt)
+    f
+end
+#save("sod1_pressure.pdf", f)
