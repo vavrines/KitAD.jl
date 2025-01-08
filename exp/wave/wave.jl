@@ -60,7 +60,7 @@ function rhs!(df, f, p, t)
         return KA.conserve_prim(w[:, i], 3)
     end)
     M = reduce(hcat, map(1:nx) do i
-        return KB.maxwellian(u, prim[:, i])
+        return KA.maxwellian(u, prim[:, i])
     end)
 
     for j in axes(f, 2)
