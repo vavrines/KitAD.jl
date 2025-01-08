@@ -39,9 +39,9 @@ end
 
 function moments_conserve(h, b, u, ω)
     return [
-        KB.discrete_moments(h, u, ω, 0),
-        KB.discrete_moments(h, u, ω, 1),
-        0.5 * (KB.discrete_moments(h, u, ω, 2) + KB.discrete_moments(b, u, ω, 0)),
+        discrete_moments(h, u, ω, 0),
+        discrete_moments(h, u, ω, 1),
+        0.5 * (discrete_moments(h, u, ω, 2) + discrete_moments(b, u, ω, 0)),
     ]
 end
 
