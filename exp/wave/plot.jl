@@ -111,7 +111,7 @@ begin
     idx = 1
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
-    lines!(ax, ps.x[1:ps.nx], solw1[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solw1[:, idx]; color=D["asagi"], label="initial")
     lines!(ax, ps.x[1:ps.nx], solw2[:, idx]; color=D["tohoh"], label="optimized")
     lines!(
         ax,
@@ -119,7 +119,7 @@ begin
         solw0[:, idx];
         color=D["ro"],
         linestyle=:dash,
-        label="exact",
+        label="reference",
     )
     axislegend(; position=:rt)
     f
@@ -130,7 +130,7 @@ begin
     idx = 2
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Velocity")
-    lines!(ax, ps.x[1:ps.nx], solw1[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solw1[:, idx]; color=D["asagi"], label="initial")
     lines!(ax, ps.x[1:ps.nx], solw2[:, idx]; color=D["tohoh"], label="optimized")
     lines!(
         ax,
@@ -138,7 +138,7 @@ begin
         solw0[:, idx];
         color=D["ro"],
         linestyle=:dash,
-        label="exact",
+        label="reference",
     )
     axislegend(; position=:lt)
     f
@@ -149,7 +149,7 @@ begin
     idx = 3
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
-    lines!(ax, ps.x[1:ps.nx], solw1[:, idx]; color=D["asagi"], label="original")
+    lines!(ax, ps.x[1:ps.nx], solw1[:, idx]; color=D["asagi"], label="initial")
     lines!(ax, ps.x[1:ps.nx], solw2[:, idx]; color=D["tohoh"], label="optimized")
     lines!(
         ax,
@@ -157,7 +157,7 @@ begin
         solw0[:, idx];
         color=D["ro"],
         linestyle=:dash,
-        label="exact",
+        label="reference",
     )
     axislegend(; position=:rb)
     f
