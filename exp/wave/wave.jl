@@ -96,14 +96,15 @@ end
 
 loss(p0)
 
+res = sci_train(loss, [10.0], Adam(0.05); cb=default_callback, iters=10, ad=AutoZygote())
+res = sci_train(loss, res.u, LBFGS(); cb=default_callback, iters=50, ad=AutoZygote())
+@show res.u # res.u~[0.00985713179259482]
+
 cb = function (p, l)
-    println("loss: $(l)")
-    return false
+    println("loss: $l")
+    return ifelse(l < 5e-5, true, false)
 end
 
-res = sci_train(loss, [10.0], Adam(0.05); cb=cb, iters=200, ad=AutoZygote())
-res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=50, ad=AutoZygote())
+@time sci_train(loss, res.u, LBFGS(); cb=cb, iters=10, ad=AutoZygote())
 
-@show res.u
-
-"""~[0.00985713179259482]"""
+# 26.265181 seconds (249.26 M allocations: 10.084 GiB, 8.36% gc time)
