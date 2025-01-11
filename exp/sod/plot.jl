@@ -211,7 +211,6 @@ begin
 end
 #save("sod_proportion.pdf", f)
 
-
 function rhs1!(dw, w, p, t)
     nx = size(w, 2)
 

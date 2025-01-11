@@ -4,7 +4,7 @@ using KitBase.ProgressMeter: @showprogress
 set = Setup(; case="shock", space="1d2f1v", collision="shakhov", maxTime=50)
 ps = PSpace1D(-25, 25, 50, 1)
 vs = VSpace1D(-8, 8, 36)
-gas = Gas(; Kn=1.0, Ma=3.0, K=2.0, Pr=2/3)
+gas = Gas(; Kn=1.0, Ma=3.0, K=2.0, Pr=2 / 3)
 ib = IB2F(KB.config_ib(set, ps, vs, gas)...)
 
 ks = SolverSet(set, ps, vs, gas, ib)

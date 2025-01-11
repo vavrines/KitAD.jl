@@ -11,7 +11,7 @@ ks = SolverSet(set, ps, vs, gas, ib)
 using KitBase.JLD2
 cd(@__DIR__)
 @load "shakhov.jld2" ctr
-solf0 = zeros(Float32, vs.nu*2, ps.nx)
+solf0 = zeros(Float32, vs.nu * 2, ps.nx)
 for i in 1:ps.nx
     solf0[1:vs.nu, i] .= ctr[i].h
     solf0[vs.nu+1:end, i] .= ctr[i].b
@@ -31,7 +31,7 @@ end
 
 begin
     prim0 = zeros(Float32, 3, axes(ps.x, 1))
-    f0 = zeros(Float32, vs.nu*2, ps.nx)
+    f0 = zeros(Float32, vs.nu * 2, ps.nx)
     for i in axes(f0, 2)
         prim0[:, i] .= ib.bc(ps.x[i], ib.p)
         f0[1:vs.nu, i] .= KB.maxwellian(vs.u, prim0[:, i])
@@ -73,7 +73,7 @@ function rhs!(df, f, p, t)
         return KA.moments_conserve(h[:, i], b[:, i], u, weights)
     end)
     prim = reduce(hcat, map(1:nx) do i
-        return KA.conserve_prim(w[:, i], 5/3)
+        return KA.conserve_prim(w[:, i], 5 / 3)
     end)
     H = reduce(hcat, map(1:nx) do i
         return KA.maxwellian(u, prim[:, i])
@@ -89,7 +89,7 @@ function rhs!(df, f, p, t)
             M[i, j] = H[i, j]
             M[nu+i, j] = B[i, j]
         end
-    end    
+    end
 
     for j in 2:nx-1
         tau = mu * 2.0 * prim[end, j]^0.5 / prim[1, j]
@@ -108,7 +108,10 @@ function rhs!(df, f, p, t)
     return nothing
 end
 
-nn = FnChain(FnDense(vs.nu*2, vs.nu*2, tanh; bias=false), FnDense(vs.nu*2, vs.nu*2; bias=false))
+nn = FnChain(
+    FnDense(vs.nu * 2, vs.nu * 2, tanh; bias=false),
+    FnDense(vs.nu * 2, vs.nu * 2; bias=false),
+)
 p0 = init_params(nn)
 
 prob0 = ODEProblem(rhs!, f0, tspan, p0)
@@ -121,7 +124,7 @@ function loss(p)
     #solw = reduce(hcat, map(1:nx) do i
     #    return KA.moments_conserve(sol[1:nu, i, end], sol[nu+1:end, i, end], u, weights)
     #end)
-    
+
     l = sum(abs2, sol .- solf0)
 
     return l

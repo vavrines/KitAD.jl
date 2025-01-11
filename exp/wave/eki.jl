@@ -80,7 +80,7 @@ using KitBase.ProgressMeter: @showprogress
 
 prob = ODEProblem(rhs!, f0, tspan, [10.0])
 function loss(p)
-    sol = solve(prob, Euler(); p = p, saveat = tran, dt=dt) |> Array
+    sol = solve(prob, Euler(); p=p, saveat=tran, dt=dt) |> Array
 
     loss = sum(abs2, sol .- sol0)
     return [loss]
@@ -103,27 +103,27 @@ ensemble_kalman_process = EnsembleKalmanProcess(
     initial_ensemble,
     loss_target,
     Γ,
-    Inversion(),
-    scheduler = DefaultScheduler(1),
-    accelerator = DefaultAccelerator(),
-    localization_method = EnsembleKalmanProcesses.Localizers.NoLocalization(),
-    failure_handler_method = SampleSuccGauss(),
+    Inversion();
+    scheduler=DefaultScheduler(1),
+    accelerator=DefaultAccelerator(),
+    localization_method=EnsembleKalmanProcesses.Localizers.NoLocalization(),
+    failure_handler_method=SampleSuccGauss(),
 )
 
 pe0 = get_u_final(ensemble_kalman_process)
-loss([mean(pe0[iter, :]) for iter = 1:length(p0)]) |> first
+loss([mean(pe0[iter, :]) for iter in 1:length(p0)]) |> first
 
 @time while true
     params_i = get_u_final(ensemble_kalman_process)
     g_ens = zeros(1, N_ensemble)
-    for i = 1:N_ensemble
+    for i in 1:N_ensemble
         g = loss(params_i[:, i])[1]
         g_ens[1, i] = g
     end
     update_ensemble!(ensemble_kalman_process, g_ens)
 
     _p = get_u_final(ensemble_kalman_process)
-    _l = loss([mean(_p[iter, :]) for iter = 1:length(p0)]) |> first
+    _l = loss([mean(_p[iter, :]) for iter in 1:length(p0)]) |> first
     println("loss: $_l")
 
     if _l < 1.1e-5
