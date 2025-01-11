@@ -4,9 +4,6 @@ Machine learning assisted modeling for kinetic collision operator
 """
 
 using OrdinaryDiffEq, SciMLSensitivity, Solaris, KitBase
-using Optimization: AutoZygote
-using Optimisers: Adam
-using Optim: LBFGS
 using BenchmarkTools, Plots
 
 set = config_ntuple(;
@@ -129,8 +126,8 @@ cb = function (p, l)
     return false
 end
 
-res = sci_train(loss, p0, Adam(0.05); cb=cb, iters=100, ad=AutoZygote())
-res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=100, ad=AutoZygote())
+res = sci_train(loss, p0, Adam(0.05); cb=cb, iters=10, ad=AutoZygote())
+res = sci_train(loss, res.u, LBFGS(); cb=cb, iters=20, ad=AutoZygote())
 res = sci_train(loss, res.u, Adam(0.01); cb=cb, iters=100, ad=AutoZygote())
 
 ube = ODEProblem(rhs, h0_1D, tspan, p0)
