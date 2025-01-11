@@ -3,11 +3,11 @@ Machine learning assisted modeling for hydrodynamic closure
 
 """
 
-using OrdinaryDiffEq, KitBase, SciMLSensitivity, Solaris
+using OrdinaryDiffEq, KitBase, Solaris, CairoMakie, NipponColors
 using KitBase.JLD2
-using Plots
 using Solaris.Flux: sigmoid
-import KitAD as KA
+
+D = dict_color()
 
 function flux_basis(wL, wR)
     primL = conserve_prim(wL, γ)
@@ -95,19 +95,219 @@ end
 
 prob = ODEProblem(rhs!, w0, tspan, u)
 sol = solve(prob, Euler(); saveat=tran, dt=dt) |> Array
-sol = solve(prob, Tsit5(); saveat=tran) |> Array
+#sol = solve(prob, Tsit5(); saveat=tran) |> Array
 
 prob0 = ODEProblem(rhs0!, w0, tspan, u)
 sol0 = solve(prob0, Euler(); saveat=tran, dt=dt) |> Array
-sol0 = solve(prob0, Tsit5(); saveat=tran) |> Array
+#sol0 = solve(prob0, Tsit5(); saveat=tran) |> Array
 
-let idx = 4, itx = 21
-    plot(ps.x, sol[idx, :, itx])
-    plot!(ps.x, sol0[idx, :, itx])
-    plot!(ps.x, resArr[idx, :, itx])
+solp = zero(sol)
+solp_ns = zero(sol)
+solp_kt = zero(sol)
+for i in 1:ps.nx, j in 1:length(tran)
+    solp[:, i, j] .= conserve_prim(sol[:, i, j], γ)
+    solp_ns[:, i, j] .= conserve_prim(sol0[:, i, j], γ)
+    solp_kt[:, i, j] .= conserve_prim(resArr[:, i, j], γ)
+
+    solp[end, i, j] = 1 / solp[end, i, j]
+    solp_ns[end, i, j] = 1 / solp_ns[end, i, j]
+    solp_kt[end, i, j] = 1 / solp_kt[end, i, j]
 end
 
-idx = 4
-plot(ps.x, 1 ./ sol[idx, :, end])
-plot!(ps.x, 1 ./ sol0[idx, :, end])
-plot!(ps.x, 1 ./ resArr[idx, :, end])
+begin
+    idx, itx = 1, 3
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer1tau_density.pdf", f)
+
+    idx, itx = 2, 3
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="U")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer1tau_u.pdf", f)
+
+    idx, itx = 3, 3
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="V")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer1tau_v.pdf", f)
+
+    idx, itx = 4, 3
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer1tau_temperature.pdf", f)
+end
+
+begin
+    idx, itx = 1, 11
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer5tau_density.pdf", f)
+
+    idx, itx = 2, 11
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="U")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer5tau_u.pdf", f)
+
+    idx, itx = 3, 11
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="V")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer5tau_v.pdf", f)
+
+    idx, itx = 4, 11
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer5tau_temperature.pdf", f)
+end
+
+begin
+    idx, itx = 1, 21
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer10tau_density.pdf", f)
+
+    idx, itx = 2, 21
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="U")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer10tau_u.pdf", f)
+
+    idx, itx = 3, 21
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="V")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer10tau_v.pdf", f)
+
+    idx, itx = 4, 21
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
+    scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
+    lines!(
+        ax,
+        ps.x,
+        solp_kt[idx, :, itx];
+        color=D["asagi"],
+        label="kinetic",
+    )
+    lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
+    axislegend(; position=:lt)
+    f
+    save("layer10tau_temperature.pdf", f)
+end
