@@ -71,7 +71,7 @@ nn = FnChain(FnDense(vs.nu, vs.nu * 4, tanh), FnDense(vs.nu * 4, vs.nu))
 p0 = init_params(nn)
 
 cd(@__DIR__)
-@load "relax_params.jld2" u
+@load "relax.jld2" u
 
 function rhs(f, p, t)
     return (H0_1D .- f) ./ τ0 .+ nn(H0_1D .- f, p)
@@ -81,12 +81,104 @@ ube = ODEProblem(rhs, h0_1D, tspan, p0)
 data_nn = solve(ube, Tsit5(); u0=h0_1D, p=u, saveat=tsteps) |> Array
 
 begin
-    idx = 81
+    idx = 2
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="u", ylabel="Distribution")
+    scatter!(ax, vs.u, data_nn[:, idx]; color=D["aonibi"], label="optimized")
     lines!(ax, vs.u, data_boltz_1D[:, idx]; color=D["asagi"], label="Boltzmann")
-    lines!(ax, vs.u, data_bgk_1D[:, idx]; color=D["asagi"], label="BGK")
-    scatter!(ax, vs.u, data_nn[:, idx]; color=D["tohoh"], label="optimized")
+    lines!(ax, vs.u, data_bgk_1D[:, idx]; color=D["tohoh"], label="BGK")
     axislegend(; position=:rt)
     f
 end
+save("relax_t1.pdf", f)
+
+begin
+    idx = 4
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="u", ylabel="Distribution")
+    scatter!(ax, vs.u, data_nn[:, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, vs.u, data_boltz_1D[:, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, vs.u, data_bgk_1D[:, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:rt)
+    f
+end
+save("relax_t2.pdf", f)
+
+begin
+    idx = 6
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="u", ylabel="Distribution")
+    scatter!(ax, vs.u, data_nn[:, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, vs.u, data_boltz_1D[:, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, vs.u, data_bgk_1D[:, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:rt)
+    f
+end
+save("relax_t3.pdf", f)
+
+begin
+    idx = 11
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="u", ylabel="Distribution")
+    scatter!(ax, vs.u, data_nn[:, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, vs.u, data_boltz_1D[:, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, vs.u, data_bgk_1D[:, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:rt)
+    f
+end
+save("relax_t4.pdf", f)
+
+begin
+    idx = 31
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="u", ylabel="Distribution")
+    scatter!(ax, vs.u, data_nn[:, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, vs.u, data_boltz_1D[:, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, vs.u, data_bgk_1D[:, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:rt)
+    f
+end
+save("relax_t5.pdf", f)
+
+begin
+    idx = 51
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="u", ylabel="Distribution")
+    scatter!(ax, vs.u, data_nn[:, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, vs.u, data_boltz_1D[:, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, vs.u, data_bgk_1D[:, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:rt)
+    f
+end
+save("relax_t6.pdf", f)
+
+begin
+    fig = Figure()
+    ax = Axis(fig[1, 1]; xlabel="x", ylabel="y", title="", aspect=1)
+    co = contourf!(vs.u, tsteps, data_nn; colormap=:PiYG_8, levels=20)
+    Colorbar(fig[1, 2], co)
+    fig
+end
+save("relax_pdf.pdf", fig)
+
+r = rhs(data_nn, u, 0.0)
+rhs0(f, p, t) = (H0_1D .- f) ./ τ0
+r0 = rhs0(data_bgk_1D, u, 0.0)
+
+begin
+    fig = Figure()
+    ax = Axis(fig[1, 1]; xlabel="x", ylabel="y", title="", aspect=1)
+    co = contourf!(vs.u, tsteps, r; colormap=:PiYG_8, levels=20)
+    Colorbar(fig[1, 2], co)
+    fig
+end
+save("relax_q.pdf", fig)
+
+begin
+    fig = Figure()
+    ax = Axis(fig[1, 1]; xlabel="x", ylabel="y", title="", aspect=1)
+    co = contourf!(vs.u, tsteps, r .- r0; colormap=:PiYG_8, levels=20)
+    Colorbar(fig[1, 2], co)
+    fig
+end
+save("relax_dq.pdf", fig)

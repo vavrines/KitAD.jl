@@ -119,13 +119,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -135,13 +129,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="U")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -151,13 +139,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="V")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -167,13 +149,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -185,13 +161,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -201,13 +171,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="U")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -217,13 +181,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="V")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -233,13 +191,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -251,13 +203,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Density")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -267,13 +213,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="U")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -283,13 +223,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="V")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
@@ -299,13 +233,7 @@ begin
     f = Figure()
     ax = Axis(f[1, 1]; xlabel="x", ylabel="Temperature")
     scatter!(ax, ps.x, solp[idx, :, itx]; color=D["aonibi"], label="current")
-    lines!(
-        ax,
-        ps.x,
-        solp_kt[idx, :, itx];
-        color=D["asagi"],
-        label="kinetic",
-    )
+    lines!(ax, ps.x, solp_kt[idx, :, itx]; color=D["asagi"], label="kinetic")
     lines!(ax, ps.x, solp_ns[idx, :, itx]; color=D["tohoh"], label="continuum")
     axislegend(; position=:lt)
     f
