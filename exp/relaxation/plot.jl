@@ -154,7 +154,7 @@ save("relax_t6.pdf", f)
 
 begin
     fig = Figure()
-    ax = Axis(fig[1, 1]; xlabel="x", ylabel="y", title="", aspect=1)
+    ax = Axis(fig[1, 1]; xlabel="u", ylabel="t", title="", aspect=1)
     co = contourf!(vs.u, tsteps, data_nn; colormap=:PiYG_8, levels=20)
     Colorbar(fig[1, 2], co)
     fig
@@ -167,7 +167,7 @@ r0 = rhs0(data_bgk_1D, u, 0.0)
 
 begin
     fig = Figure()
-    ax = Axis(fig[1, 1]; xlabel="x", ylabel="y", title="", aspect=1)
+    ax = Axis(fig[1, 1]; xlabel="u", ylabel="t", title="", aspect=1)
     co = contourf!(vs.u, tsteps, r; colormap=:PiYG_8, levels=20)
     Colorbar(fig[1, 2], co)
     fig
@@ -176,7 +176,7 @@ save("relax_q.pdf", fig)
 
 begin
     fig = Figure()
-    ax = Axis(fig[1, 1]; xlabel="x", ylabel="y", title="", aspect=1)
+    ax = Axis(fig[1, 1]; xlabel="u", ylabel="t", title="", aspect=1)
     co = contourf!(vs.u, tsteps, r .- r0; colormap=:PiYG_8, levels=20)
     Colorbar(fig[1, 2], co)
     fig
