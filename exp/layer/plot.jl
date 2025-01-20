@@ -101,6 +101,25 @@ prob0 = ODEProblem(rhs0!, w0, tspan, u)
 sol0 = solve(prob0, Euler(); saveat=tran, dt=dt) |> Array
 #sol0 = solve(prob0, Tsit5(); saveat=tran) |> Array
 
+# benchmark
+@time KB.flux_gks!(
+    zeros(4),
+    w0[:, 1],
+    w0[:, 2],
+    gas.K,
+    gas.γ,
+    gas.μᵣ,
+    gas.ω,
+    1.0,
+    0.1,
+    0.1,
+    0.1,
+    zero(w0[:, 1]),
+    zero(w0[:, 1]),
+)
+@time nn(vcat(w0[:, 1], w0[:, 2]), p0)
+
+
 solp = zero(sol)
 solp_ns = zero(sol)
 solp_kt = zero(sol)
