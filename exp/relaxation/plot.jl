@@ -161,6 +161,15 @@ begin
 end
 save("relax_pdf.pdf", fig)
 
+begin
+    fig = Figure()
+    ax = Axis(fig[1, 1]; xlabel="u", ylabel="t", title="", aspect=1)
+    co = contourf!(vs.u, tsteps, data_nn .- data_bgk_1D; colormap=:PiYG_8, levels=15)
+    Colorbar(fig[1, 2], co)
+    fig
+end
+save("relax_df.pdf", fig)
+
 r = rhs(data_nn, u, 0.0)
 rhs0(f, p, t) = (H0_1D .- f) ./ τ0
 r0 = rhs0(data_bgk_1D, u, 0.0)
