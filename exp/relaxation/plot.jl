@@ -55,6 +55,10 @@ phi, psi, chi = kernel_mode(
 prob = ODEProblem(boltzmann_ode!, f0, tspan, (kn_bzm, set.nm, phi, psi, chi))
 data_boltz = solve(prob, Tsit5(); saveat=tsteps) |> Array
 
+GC.gc()
+@time solve(prob, Tsit5(); saveat=tsteps)
+# 2.318710 seconds (38.58 k allocations: 6.348 GiB, 13.46% gc time)
+
 prob1 = ODEProblem(bgk_ode!, f0, tspan, [M0, τ0])
 data_bgk = solve(prob1, Tsit5(); saveat=tsteps) |> Array
 
@@ -79,6 +83,18 @@ end
 
 ube = ODEProblem(rhs, h0_1D, tspan, p0)
 data_nn = solve(ube, Tsit5(); u0=h0_1D, p=u, saveat=tsteps) |> Array
+
+GC.gc()
+@time solve(ube, Tsit5(); u0=h0_1D, p=u, saveat=tsteps)
+# 0.003911 seconds (8.16 k allocations: 47.943 MiB)
+
+function rhs11(f, p, t)
+    return (H0_1D .- f) ./ τ0
+end
+ube1 = ODEProblem(rhs11, h0_1D, tspan, p0)
+GC.gc()
+@time solve(ube1, Tsit5(); u0=h0_1D, p=u, saveat=tsteps)
+# 0.000896 seconds (4.57 k allocations: 1.373 MiB)
 
 begin
     idx = 2
