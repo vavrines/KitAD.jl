@@ -158,6 +158,54 @@ begin
 end
 save("relax_s6.pdf", f)
 
+function get_entropy(f, weights)
+    return sum(f .* log.(abs.(f)) .* weights)
+end
+
+wseries = zeros(4, 3, set.nt)
+for i in 1:set.nt
+    wseries[1:3, 1, i] = moments_conserve(data_nn[:, i], vs.u, vs.weights)
+    wseries[1:3, 2, i] = moments_conserve(data_boltz_1D[:, i], vs.u, vs.weights)
+    wseries[1:3, 3, i] = moments_conserve(data_bgk_1D[:, i], vs.u, vs.weights)
+    wseries[4, 1, i] = get_entropy(data_nn[:, i], vs.weights)
+    wseries[4, 2, i] = get_entropy(data_boltz_1D[:, i], vs.weights)
+    wseries[4, 3, i] = get_entropy(data_bgk_1D[:, i], vs.weights)
+end
+
+idx = 1:51
+begin
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="t", ylabel="Density")
+    scatter!(ax, tsteps[idx], wseries[1, 1, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, tsteps[idx], wseries[1, 2, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, tsteps[idx], wseries[1, 3, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:lt)
+    f
+end
+save("relax_cons4.pdf", f)
+
+begin
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="t", ylabel="Momentum")
+    scatter!(ax, tsteps[idx], wseries[2, 1, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, tsteps[idx], wseries[2, 2, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, tsteps[idx], wseries[2, 3, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:lt)
+    f
+end
+save("relax_cons5.pdf", f)
+
+begin
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="t", ylabel="Entropy")
+    scatter!(ax, tsteps[idx], wseries[4, 1, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, tsteps[idx], wseries[4, 2, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, tsteps[idx], wseries[4, 3, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:lt)
+    f
+end
+save("relax_cons6.pdf", f)
+
 # physics-augmented
 @load "relax_phys.jld2" u
 
@@ -243,3 +291,47 @@ begin
     f
 end
 save("relax_r6.pdf", f)
+
+wseries = zeros(4, 3, set.nt)
+for i in 1:set.nt
+    wseries[1:3, 1, i] = moments_conserve(data_nn[:, i], vs.u, vs.weights)
+    wseries[1:3, 2, i] = moments_conserve(data_boltz_1D[:, i], vs.u, vs.weights)
+    wseries[1:3, 3, i] = moments_conserve(data_bgk_1D[:, i], vs.u, vs.weights)
+    wseries[4, 1, i] = get_entropy(data_nn[:, i], vs.weights)
+    wseries[4, 2, i] = get_entropy(data_boltz_1D[:, i], vs.weights)
+    wseries[4, 3, i] = get_entropy(data_bgk_1D[:, i], vs.weights)
+end
+
+idx = 1:51
+begin
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="t", ylabel="Density")
+    scatter!(ax, tsteps[idx], wseries[1, 1, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, tsteps[idx], wseries[1, 2, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, tsteps[idx], wseries[1, 3, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:lt)
+    f
+end
+save("relax_cons7.pdf", f)
+
+begin
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="t", ylabel="Momentum")
+    scatter!(ax, tsteps[idx], wseries[2, 1, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, tsteps[idx], wseries[2, 2, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, tsteps[idx], wseries[2, 3, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:lt)
+    f
+end
+save("relax_cons8.pdf", f)
+
+begin
+    f = Figure()
+    ax = Axis(f[1, 1]; xlabel="t", ylabel="Entropy")
+    scatter!(ax, tsteps[idx], wseries[4, 1, idx]; color=D["aonibi"], label="optimized")
+    lines!(ax, tsteps[idx], wseries[4, 2, idx]; color=D["asagi"], label="Boltzmann")
+    lines!(ax, tsteps[idx], wseries[4, 3, idx]; color=D["tohoh"], label="BGK")
+    axislegend(; position=:lt)
+    f
+end
+save("relax_cons9.pdf", f)
