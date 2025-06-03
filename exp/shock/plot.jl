@@ -122,4 +122,3 @@ begin
     fig
 end
 save("shock_dq.pdf", fig)
-

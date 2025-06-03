@@ -64,7 +64,7 @@ for i in 1:ps.nx
     if ps.x[i] <= 0
         prim0[:, i] .= [1.0, 0.0, 0.5, 1.0]
     else
-        prim0[:, i] .= [1.0, 0.0, -1.0, 5/3]
+        prim0[:, i] .= [1.0, 0.0, -1.0, 5 / 3]
     end
 
     w0[:, i] .= prim_conserve(prim0[:, i], gas.γ)

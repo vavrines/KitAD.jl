@@ -119,7 +119,6 @@ sol0 = solve(prob0, Euler(); saveat=tran, dt=dt) |> Array
 )
 @time nn(vcat(w0[:, 1], w0[:, 2]), p0)
 
-
 solp = zero(sol)
 solp_ns = zero(sol)
 solp_kt = zero(sol)

@@ -82,14 +82,15 @@ end
 
 using Metaheuristics
 
-bounds = BoxConstrainedSpace(lb = -1e4ones(1), ub = 1e4ones(1))
-information = Information(f_optimum = 0.0)
+bounds = BoxConstrainedSpace(; lb=-1e4ones(1), ub=1e4ones(1))
+information = Information(; f_optimum=0.0)
 
 alg = Metaheuristics.GA(;
-N = 100, mutation=PolynomialMutation(; bounds),
-                crossover=SBX(;bounds),
-                environmental_selection=GenerationalReplacement()
-               )
+    N=100,
+    mutation=PolynomialMutation(; bounds),
+    crossover=SBX(; bounds),
+    environmental_selection=GenerationalReplacement(),
+)
 
 set_user_solutions!(alg, [10.0], loss)
 

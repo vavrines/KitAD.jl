@@ -29,9 +29,11 @@ vs = VSpace1D(set.u0, set.u1, set.nu)
 vs2 = VSpace2D(set.v0, set.v1, set.nv, set.w0, set.w1, set.nw)
 vs3 = VSpace3D(set.u0, set.u1, set.nu, set.v0, set.v1, set.nv, set.w0, set.w1, set.nw)
 
-f0 = @. 0.5 * (1 / π)^1.5 *
-    (exp(-(vs3.u - 1) ^ 2) + exp(-(vs3.u + 1) ^ 2)) *
-    exp(-vs3.v ^ 2) * exp(-vs3.w ^ 2)
+f0 = @. 0.5 *
+   (1 / π)^1.5 *
+   (exp(-(vs3.u - 1)^2) + exp(-(vs3.u + 1)^2)) *
+   exp(-vs3.v^2) *
+   exp(-vs3.w^2)
 w0 = moments_conserve(f0, vs3.u, vs3.v, vs3.w, vs3.weights)
 prim0 = conserve_prim(w0, γ)
 M0 = maxwellian(vs3.u, vs3.v, vs3.w, prim0)
@@ -39,7 +41,7 @@ mu_ref = ref_vhs_vis(set.Kn, set.alpha, set.omega)
 τ0 = mu_ref * 2.0 * prim0[end]^(0.5) / prim0[1]
 
 prob = ODEProblem(boltzmann_ode!, f0, tspan, fsm_kernel(vs3, mu_ref))
-data_boltz = solve(prob, Tsit5(), saveat = tsteps) |> Array
+data_boltz = solve(prob, Tsit5(); saveat=tsteps) |> Array
 
 GC.gc()
 @time solve(prob, Tsit5(); saveat=tsteps)
@@ -51,10 +53,8 @@ data_bgk = solve(prob1, Tsit5(); saveat=tsteps) |> Array
 data_boltz_1D = zeros(axes(data_boltz, 1), axes(data_boltz, 4))
 data_bgk_1D = zeros(axes(data_bgk, 1), axes(data_bgk, 4))
 for j in axes(data_boltz_1D, 2)
-    data_boltz_1D[:, j] .=
-        reduce_distribution(data_boltz[:, :, :, j], vs2.weights)
-    data_bgk_1D[:, j] .=
-        reduce_distribution(data_bgk[:, :, :, j], vs2.weights)
+    data_boltz_1D[:, j] .= reduce_distribution(data_boltz[:, :, :, j], vs2.weights)
+    data_bgk_1D[:, j] .= reduce_distribution(data_bgk[:, :, :, j], vs2.weights)
 end
 h0_1D, b0_1D = reduce_distribution(f0, vs3.v, vs3.w, vs2.weights)
 H0_1D, B0_1D = reduce_distribution(M0, vs3.v, vs3.w, vs2.weights)
@@ -67,7 +67,7 @@ cd(@__DIR__)
 #@load "relax_phys.jld2" u
 
 function rhs(f, p, t)
-#    return (H0_1D .- f) ./ τ0 .+ nn(H0_1D .- f, p)
+    #    return (H0_1D .- f) ./ τ0 .+ nn(H0_1D .- f, p)
     return nn(f, p)
 end
 
@@ -157,7 +157,6 @@ begin
     f
 end
 save("relax_s6.pdf", f)
-
 
 # physics-augmented
 @load "relax_phys.jld2" u
